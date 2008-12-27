@@ -1,0 +1,45 @@
+tiffscan (0.6-1) unstable; urgency=low
+
+  * reintroduced build-time compatibility with sane
+  * fixed setting backend arguments
+
+ -- Alessandro Zummo <a.zummo@towertech.it>  Sat, 27 Dec 2008 01:55:16 +0100
+
+tiffscan (0.5-1) unstable; urgency=low
+
+  * add warning if sane evolution has not been detected
+  * implemented the new sane evolution protection api
+
+ -- Alessandro Zummo <a.zummo@towertech.it>  Fri, 09 May 2008 23:12:30 +0200
+
+tiffscan (0.4-1) unstable; urgency=low
+
+  * added tiff orientation
+  * more verbosity available
+  * removed garbage XXX in output
+  * added support for SANE Evolution
+
+ -- Alessandro Zummo <a.zummo@towertech.it>  Tue, 25 Mar 2008 14:49:35 +0100
+
+tiffscan (0.3-1) unstable; urgency=low
+
+  * tiffscan returns with exit code 2 if it was
+  unable to scan any page and the batch mode was enabled.
+  * added some tiff tags: DateTime, Artist,
+  Copyright, DocumentName, HostComputer
+  * removed references to scanimage in the source
+  * fixed a segfault when handling backend options
+  * do not leave empty files in batch mode
+  * some code cleanup
+  * added more examples to the README
+  * added support for libpaper
+  * added support for RGBA (infrared)
+  * added support for SANE cookie
+
+ -- Alessandro Zummo <a.zummo@towertech.it>  Tue, 11 Dec 2007 13:03:24 +0100
+
+tiffscan (0.2-1) unstable; urgency=low
+
+  * First public release.
+
+ -- Stefano Merlo <sm@bluetux.it>  Mon, 22 Jan 2007 22:01:00 +0100

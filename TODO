@@ -1,0 +1,7 @@
+
+ * code restyling
+ * refine --help with backend options
+ * check all memory allocations
+ * move support functions to separate .c file
+
+ 

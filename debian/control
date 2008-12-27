@@ -1,0 +1,14 @@
+Source: tiffscan
+Section: graphics
+Priority: optional
+Maintainer: Stefano Merlo <sm@bluetux.it>
+Standards-Version: 3.7.2
+Build-Depends: debhelper (>= 5), libtiff-dev, libpopt-dev, libsane-dev, libpaper-dev
+
+Package: tiffscan
+Architecture: any
+Depends: libsane | libsane-evolution, libc6 (>= 2.7-1), libpaper1, libpopt0 (>= 1.10), libtiff4
+Description: Advanced command line SANE frontend with TIFF support
+ It has batch mode capabilities and can generate compressed multi-page 
+ TIFF files. It handles from black and white to color plus infrared 
+ scans.

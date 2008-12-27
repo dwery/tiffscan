@@ -1,0 +1,36 @@
+20081226 0.6
+	- bumped version
+	- fixes setting of SANE_FIXED options
+	- made SANE Evolution optional at compile time
+
+20080509 0.5
+	- bumped version
+	- add warning if sane evolution has not been detected
+	- implemented the new sane evolution protection api
+
+20080325 0.4
+	- added tiff orientation
+	- more verbosity available
+	- removed garbage XXX in output
+	- added support for SANE Evolution
+
+
+20071211 0.3
+	- tiffscan returns with exit code 2 if it was
+	unable to scan any page and the batch mode was enabled.
+	- added some tiff tags: DateTime, Artist,
+	Copyright, DocumentName, HostComputer
+	- removed references to scanimage in the source
+	- fixed a segfault when handling backend options
+	- do not leave empty files in batch mode
+	- some code cleanup
+	- added more examples to the README
+	- added support for libpaper
+	- added support for RGBA (infrared)
+	- added support for SANE cookie
+
+20070122 0.2
+	- First public release
+
+200701XX 0.1
+	- First development version
