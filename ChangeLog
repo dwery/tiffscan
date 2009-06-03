@@ -1,4 +1,5 @@
 
+	- SANE does not have infrared yet
 	- added requirements to documentation
 	- warn of incorrectusage of  --device
 	- improper exit when -v was used

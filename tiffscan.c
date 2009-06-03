@@ -31,7 +31,7 @@
 #warning compiling without SANE Evolution
 #endif
 
-#if defined(SANE_CURRENT_MINOR) || defined(SANE_HAS_EVOLVED)
+#if defined(SANE_HAS_EVOLVED)
 #define SANE_HAS_INFRARED
 #define SANE_HAS_WARMING_UP
 #endif
