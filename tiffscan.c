@@ -1,6 +1,6 @@
 /*
  * tiffscan -- command line scanning utility
- * Copyright (C) 2007-08 by Alessandro Zummo <a.zummo@towertech.it>
+ * Copyright (C) 2007-09 by Alessandro Zummo <a.zummo@towertech.it>
  *
  * Based on scanimage,
  *  Copyright (C) 1996, 1997, 1998 Andreas Beck and David Mosberger
@@ -54,7 +54,7 @@
 enum optio
 {
 	OPT_HELP = 1, OPT_LIST_DEVS, OPT_VERSION, OPT_SCAN,
-	OPT_VERBOSE
+	OPT_VERBOSE, OPT_DEVICE
 };
 
 #define BATCH_COUNT_UNLIMITED -1
@@ -71,7 +71,7 @@ static SANE_Word h_y = 0;
 */
 
 /* main options */
-static const char *devname = NULL;
+static char *devname = NULL;
 static int verbose = 0;
 static int progress = 0;
 static int scanlines = 50;
@@ -110,7 +110,7 @@ static SANE_Scanner_Info si;
 #endif
 
 static struct poptOption options[] = {
-	{"device", 'd', POPT_ARG_STRING, &devname, 0, "device name", NULL},
+	{"device", 'd', POPT_ARG_STRING, NULL, OPT_DEVICE, "device name", NULL},
 	{"scan", 's', POPT_ARG_NONE, NULL, OPT_SCAN,
 	 "this should be obvious :)", NULL},
 	{"list-devices", 'L', POPT_ARG_NONE, NULL, OPT_LIST_DEVS,
@@ -1322,7 +1322,9 @@ list_devices(void)
 	}
 }
 
-static const char *
+/* caller must free the returned string */
+
+static char *
 find_suitable_device(void)
 {
 	const SANE_Device **device_list;
@@ -1330,7 +1332,7 @@ find_suitable_device(void)
 
 	char *s = getenv("SANE_DEFAULT_DEVICE");
 	if (s)
-		return s;
+		return strdup(s);
 
 	status = sane_get_devices(&device_list, SANE_FALSE);
 	if (status != SANE_STATUS_GOOD) {
@@ -1344,7 +1346,7 @@ find_suitable_device(void)
 		return NULL;
 	}
 
-	return device_list[0]->name;
+	return strdup(device_list[0]->name);
 }
 
 static TIFF *
@@ -1550,8 +1552,8 @@ process_cmd_line(int argc, const char **argv)
 			break;
 
 		case POPT_ERROR_BADOPT:
-			/* maybe a backend option */
-			break;
+        	        /* maybe a backend option */
+        	        break;
 
 		case OPT_VERBOSE:
 			verbose++;
@@ -1579,6 +1581,13 @@ process_cmd_line(int argc, const char **argv)
 				poptPrintHelp(optc, stdout, 0);
 			}
 			break;
+
+                /* this is saved here, do not use libopt automatic
+                 * assignment to a variable.
+                 */
+                case OPT_DEVICE:
+                        devname = poptGetOptArg(optc);
+                        break;
 
 		default:
 			mode = MODE_STOP;
@@ -1632,10 +1641,21 @@ process_backend_options(SANE_Handle handle, int argc, const char **argv,
 		if (optrc == OPT_HELP) {
 			mode = MODE_STOP;
 			poptPrintHelp(optc, stdout, 0);
+                        break;
 		}
 
 		if (optrc == OPT_SCAN)
 			mode = MODE_SCAN;
+
+                if (optrc == OPT_DEVICE) {
+                        const char *d = poptGetOptArg(optc);
+
+                        if (d && strcmp(d, devname) != 0) {
+                                printf("WARNING: device name must be given before backend options\n");
+                                mode = MODE_STOP;
+                                break;
+                        }
+                }
 	}
 
 	if (optrc < -1) {
@@ -1673,15 +1693,17 @@ main(int argc, const char **argv)
 		       SANE_VERSION_MAJOR(version),
 		       SANE_VERSION_MINOR(version),
 		       SANE_VERSION_BUILD(version));
-		goto end;
 	}
+
+	if (mode == MODE_VERSION)
+	        goto end;
 
 	if (mode == MODE_STOP)
 		goto end;
 
 	/* find a scanner */
 	if (devname == NULL)
-		devname = find_suitable_device();
+                devname = find_suitable_device();
 
 	if (devname == NULL)
 		goto end;
@@ -1773,7 +1795,9 @@ main(int argc, const char **argv)
 	if (status != SANE_STATUS_GOOD && status != SANE_STATUS_NO_DOCS)
 		printf("SANE error: %s\n", sane_strstatus(status));
 
-      end:
+end:
+
+        free(devname);          
 
 	exit(rc);
 }
