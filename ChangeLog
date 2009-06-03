@@ -1,3 +1,8 @@
+
+	- added requirements to documentation
+	- warn of incorrectusage of  --device
+	- improper exit when -v was used
+
 20081226 0.6
 	- bumped version
 	- fixes setting of SANE_FIXED options

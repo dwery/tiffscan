@@ -3,5 +3,7 @@
  * refine --help with backend options
  * check all memory allocations
  * move support functions to separate .c file
-
+ * check for overwrite
+ * warning for low resolution
+ * improve scanning to string
  
