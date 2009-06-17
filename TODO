@@ -5,5 +5,6 @@
  * move support functions to separate .c file
  * check for overwrite
  * warning for low resolution
- * improve scanning to string
+ * improve "scanning to" string
+ * add --invert-image
  

@@ -501,7 +501,6 @@ add_default_option(char **dst, SANE_Handle handle,
 
 	default:
 		break;
-
 	}
 
 	strext(dst, "]");
@@ -543,12 +542,12 @@ fetch_options(SANE_Handle handle)
 
 	const SANE_Option_Descriptor *opt;
 	SANE_Int num_dev_options;
-	int i, count, option_count;
+	int i, count;
 
 	/* init corners tracking */
 	memset(corners, -1, sizeof(corners));
 
-	/* build backend options table */
+	/* query number of options */
 	status = sane_control_option(handle, 0, SANE_ACTION_GET_VALUE,
 				     &num_dev_options, 0);
 	if (status != SANE_STATUS_GOOD)
@@ -562,8 +561,7 @@ fetch_options(SANE_Handle handle)
 	memset(options, 0x00,
 	       sizeof(struct poptOption) * (num_dev_options + 1));
 
-	option_count = 0;
-
+	/* build backend options table */
 	for (count = i = 0; i < num_dev_options; i++) {
 		struct poptOption *thisopt = &options[count];
 
@@ -571,6 +569,9 @@ fetch_options(SANE_Handle handle)
 
 		if (!SANE_OPTION_IS_SETTABLE(opt->cap))
 			continue;
+
+                if (opt->type == SANE_TYPE_GROUP)
+                        continue;
 
 		/* search and save resolution */
 		if ((opt->type == SANE_TYPE_FIXED
@@ -580,12 +581,12 @@ fetch_options(SANE_Handle handle)
 		    && (strcmp(opt->name, SANE_NAME_SCAN_RESOLUTION) == 0))
 			resolution_optind = i;
 
-		thisopt->longName = opt->name;
+		thisopt->longName = opt->name ? opt->name : "unknown";
 		thisopt->shortName = 0;
 		thisopt->arg = NULL;
 		thisopt->val = 1000 + i;
-		thisopt->descrip = opt->desc
-			&& strlen(opt->desc) ? opt->desc : " ";
+		thisopt->descrip = (opt->desc
+			&& strlen(opt->desc)) ? opt->desc : " ";
 		thisopt->argDescrip = NULL;
 
 		switch (opt->type) {
@@ -639,7 +640,6 @@ fetch_options(SANE_Handle handle)
 
 		add_default_option((char **) &thisopt->argDescrip, handle,
 				   opt, i);
-
 /*
 		switch (opt->unit) {
 		case SANE_UNIT_PIXEL:
@@ -694,7 +694,6 @@ sane_set_opt_word(SANE_Handle handle, SANE_Word index, double v)
 		return SANE_STATUS_INVAL;
 	}
 
-	/* XXX check opt->size and opt->type  here */
 	if (opt->type == SANE_TYPE_FIXED)
 		orig = value = SANE_FIX(v);
 	else
@@ -703,11 +702,8 @@ sane_set_opt_word(SANE_Handle handle, SANE_Word index, double v)
 	p = &value;
 	status = sane_control_option(handle, index,
 				     SANE_ACTION_SET_VALUE, p, &info);
-	if (status != SANE_STATUS_GOOD) {
-		printf("failed to set %s (%s)\n", opt->name,
-		       sane_strstatus(status));
-		return status;
-	}
+	if (status != SANE_STATUS_GOOD)
+	        return status;
 
 	if (info & SANE_INFO_INEXACT) {
 		if (opt->type == SANE_TYPE_INT)
@@ -733,15 +729,16 @@ set_option(SANE_Handle handle, int optnum, void *valuep)
 	if (opt == NULL)
 		return SANE_STATUS_INVAL;
 
-	if (opt->type == SANE_TYPE_INT)
-		return sane_set_opt_word(handle, optnum,
+	if (opt->type == SANE_TYPE_INT && opt->size == sizeof(SANE_Word))
+		status = sane_set_opt_word(handle, optnum,
 					 *(SANE_Word *) valuep);
 
-	if (opt->type == SANE_TYPE_FIXED)
-		return sane_set_opt_word(handle, optnum,
+	else if (opt->type == SANE_TYPE_FIXED && opt->size == sizeof(SANE_Word))
+		status = sane_set_opt_word(handle, optnum,
 					 SANE_UNFIX(*(SANE_Word *) valuep));
 
-	status = sane_control_option(handle, optnum,
+        else
+        	status = sane_control_option(handle, optnum,
 				     SANE_ACTION_SET_VALUE, valuep, &info);
 
 	if (status != SANE_STATUS_GOOD)

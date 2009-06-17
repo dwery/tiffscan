@@ -1,8 +1,10 @@
 
 	- SANE does not have infrared yet
 	- added requirements to documentation
-	- warn of incorrectusage of  --device
+	- warn of incorrect usage of  --device
 	- improper exit when -v was used
+	- do not fail on array options
+	- correcty handle group options
 
 20081226 0.6
 	- bumped version
