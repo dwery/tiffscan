@@ -36,6 +36,14 @@
 #define SANE_HAS_WARMING_UP
 #endif
 
+#if defined(SANE_FRAME_IR)
+#define SANE_HAS_INFRARED
+#endif
+
+#ifndef SANE_HAS_INFRARED
+#warning no infrared support
+#endif
+
 #include <sane/saneopts.h>
 
 #ifdef SANE_HAS_EVOLVED
