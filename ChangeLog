@@ -5,6 +5,7 @@
 	- improper exit when -v was used
 	- do not fail on array options
 	- correcty handle group options
+	- remove SANE Evolution warnings
 
 20081226 0.6
 	- bumped version

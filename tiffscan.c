@@ -1,6 +1,6 @@
 /*
  * tiffscan -- command line scanning utility
- * Copyright (C) 2007-09 by Alessandro Zummo <a.zummo@towertech.it>
+ * Copyright (C) 2007-10 by Alessandro Zummo <a.zummo@towertech.it>
  *
  * Based on scanimage,
  *  Copyright (C) 1996, 1997, 1998 Andreas Beck and David Mosberger
@@ -1750,13 +1750,13 @@ main(int argc, const char **argv)
 				strlen(si.serial) ? si.serial : "n/a");
 		}
 	} else {
-		printf("SANE Evolution NOT detected. You will miss some features.\n"
-			"Please check http://code.google.com/p/sane-evolution/\n");
+/*		printf("SANE Evolution NOT detected. You will miss some features.\n"
+			"Please check http://code.google.com/p/sane-evolution/\n");*/
 	}
 #else
-	printf("tiffscan has been compiled with the old SANE, you might\n"
+/*	printf("tiffscan has been compiled with the old SANE, you might\n"
 		"want to evolve to SANE Evolution or you will miss some features.\n"
-		"Please check http://code.google.com/p/sane-evolution/\n");
+		"Please check http://code.google.com/p/sane-evolution/\n");*/
 
 #endif
 	/* handle backend options */

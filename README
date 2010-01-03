@@ -3,7 +3,7 @@ tiffscan is an advanced SANE frontend. It has batch mode capabilities and
 can generate compressed multi-page TIFF files. It handles from black and
 white to 16 bit RBG+infrared scans.
 
-tiffscan is Copyright (C) 2007-08 by Alessandro Zummo
+tiffscan is Copyright (C) 2007-10 by Alessandro Zummo
 and is released under the GPL, version 2.
 
 A wiki is available at 
@@ -12,10 +12,12 @@ A wiki is available at
 Build
 -----
 
-Just run make . tiffscan requires libpaper, libtiff and libpopt.
+tiffscan requires libpaper, libtiff and libpopt. Run make
+to compile it.
 
-If you want to build against a specific include directory,
-use INCDIR=/your/path/to/include make
+If you want to build against a specific include and/or lib path, use
+
+ INCDIR=/your/path/to/include LIBDIR=/your/path/to/libs make
 
 
 Manual-By-Example
