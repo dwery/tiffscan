@@ -102,7 +102,7 @@ static int batch_increment = 1;
 static char *output_file = NULL;
 static const char *icc_profile = NULL;
 static int compress = 0;
-static int multi = 0;
+static int multi = 1;
 
 /* misc options */
 static const char *paper = NULL;
@@ -182,10 +182,10 @@ sighandler(int signum)
 	static SANE_Bool first_time = SANE_TRUE;
 
 	if (handle) {
-		printf("received signal %d\n", signum);
+		printf("\nreceived signal %d\n", signum);
 		if (first_time) {
 			first_time = SANE_FALSE;
-			printf("trying to stop scanner. one more CTRL-C will exit the program.\n");
+			printf("trying to stop the scanner, one more CTRL-C will exit tiffscan.\n");
 			sane_cancel(handle);
 		} else {
 			printf("aborting\n");
@@ -1797,7 +1797,8 @@ main(int argc, const char **argv)
 	if (batch && batch_count == 0 && status == SANE_STATUS_NO_DOCS)
 		rc = 2;
 
-	if (status != SANE_STATUS_GOOD && status != SANE_STATUS_NO_DOCS)
+	if (status != SANE_STATUS_GOOD && status != SANE_STATUS_NO_DOCS
+		&& status != SANE_STATUS_CANCELLED)
 		printf("SANE error: %s\n", sane_strstatus(status));
 
 end:

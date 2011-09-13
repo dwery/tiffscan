@@ -6,6 +6,7 @@
 	- do not fail on array options
 	- correcty handle group options
 	- remove SANE Evolution warnings
+	- --multi-page is on by default
 
 20081226 0.6
 	- bumped version
