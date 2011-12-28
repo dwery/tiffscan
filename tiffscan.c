@@ -745,9 +745,19 @@ set_option(SANE_Handle handle, int optnum, void *valuep)
 		status = sane_set_opt_word(handle, optnum,
 					 SANE_UNFIX(*(SANE_Word *) valuep));
 
-        else
+        else {
         	status = sane_control_option(handle, optnum,
 				     SANE_ACTION_SET_VALUE, valuep, &info);
+
+		if (status != SANE_STATUS_GOOD && strcmp(opt->name, "mode") == 0
+			&& strcmp(valuep, "binary") == 0) {
+
+			strcpy(valuep, "lineart");
+
+	        	status = sane_control_option(handle, optnum,
+					     SANE_ACTION_SET_VALUE, valuep, &info);
+		}
+	}
 
 	if (status != SANE_STATUS_GOOD)
 		printf("setting of option --%s failed (%s)\n",
@@ -842,7 +852,12 @@ process_backend_option(SANE_Handle handle, int optnum, const char *optarg)
 		return SANE_STATUS_INVAL;
 	}
 
-	return set_option(handle, optnum, valuep);
+	status = set_option(handle, optnum, valuep);
+
+	if (opt->type == SANE_TYPE_STRING)
+		free(valuep);
+
+	return status;
 }
 
 /* XXX tiff.c */
@@ -888,7 +903,6 @@ embed_icc_profile(TIFF * image, const char *file)
 	}
 
 	free(buf);
-
 }
 
 static int

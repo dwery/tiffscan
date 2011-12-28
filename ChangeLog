@@ -1,4 +1,6 @@
 
+	- fixed --mode=binary
+	- fixed memory leak
 	- SANE does not have infrared yet
 	- added requirements to documentation
 	- warn of incorrect usage of  --device
