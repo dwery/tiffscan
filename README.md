@@ -24,44 +24,52 @@ Standard usage
 --------------
 
 To obtain help:
-``` tiffscan --help
+```
+tiffscan --help
 ```
 
 To list known devices:
-``` tiffscan --list-devices
+```
+tiffscan --list-devices
 ```
 
 To list backend-specific options:
-``` tiffscan --device .... --help
+```
+tiffscan --device .... --help
 ```
 
 Simple scan:
-``` tiffscan --device .... --scan
+```
+tiffscan --device .... --scan
 ```
 
 Batch scan:
-``` tiffscan --device .... --scan --batch --paper a4
+```
+tiffscan --device .... --scan --batch --paper a4
 ```
 
 Batch scan to a single, compressed, multi-page TIFF file
-``` tiffscan --device .... --scan --batch --compress --multi-page
+```
+tiffscan --device .... --scan --batch --compress --multi-page
 ```
 
 Batch scan, prompt before each page
-``` tiffscan --device .... --scan --batch --batch-prompt
+```
+tiffscan --device .... --scan --batch --batch-prompt
 ```
 
 Batch scan to an user-defined file series:
-``` tiffscan --device .... --scan --batch --output-file my-scanned-page-%04d.tif
+```
+tiffscan --device .... --scan --batch --output-file my-scanned-page-%04d.tif
 ```
 
 Advanced usage (coolscan2)
 --------------------------
 ```
-    tiffscan --device ... --load
-    tiffscan --device ... --scan --autofocus --ae-wb
-    tiffscan --device ... --scan --autofocus --ae-wb --depth=12
-    tiffscan --device ... --eject
+tiffscan --device ... --load
+tiffscan --device ... --scan --autofocus --ae-wb
+tiffscan --device ... --scan --autofocus --ae-wb --depth=12
+tiffscan --device ... --eject
 ```
 
 Infrared scanning 
@@ -70,7 +78,7 @@ Infrared scanning
 (requires experimental coolscan3 driver):
 
 ```
-    tiffscan --device ... --scan --autofocus --ae-wb --depth=12 --infrared=yes
+tiffscan --device ... --scan --autofocus --ae-wb --depth=12 --infrared=yes
 ```
 
 Once the infrared image is obtained, you can use Ed Hamrick's Vuescan
@@ -80,7 +88,7 @@ Automatic batch scanning from slide autoloader
 (requires experimental coolscan3 driver) or SANE Evolution:
 
 ``` 
-    tiffscan --device ... --scan --batch --autofocus=yes --ae-wb=yes --autoload=yes
+tiffscan --device ... --scan --batch --autofocus=yes --ae-wb=yes --autoload=yes
 ```
 
 This should be enough to start using tiffscan. If you have any
