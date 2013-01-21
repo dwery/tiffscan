@@ -1,13 +1,13 @@
 /*
  * tiffscan -- command line scanning utility
- * Copyright (C) 2007-10 by Alessandro Zummo <a.zummo@towertech.it>
+ * Copyright (C) 2007-12 by Alessandro Zummo <a.zummo@towertech.it>
  *
- * Based on scanimage,
+ * Loosely based on scanimage,
  *  Copyright (C) 1996, 1997, 1998 Andreas Beck and David Mosberger
  *  
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
+ * published by the Free Software Foundation.
  *
  */
 
@@ -27,22 +27,19 @@
 
 #include <sane/sane.h>
 
-#ifndef SANE_HAS_EVOLVED
-#warning compiling without SANE Evolution
-#endif
-
 #if defined(SANE_HAS_EVOLVED)
-#define SANE_HAS_INFRARED
 #define SANE_HAS_WARMING_UP
 #endif
 
-#if defined(SANE_FRAME_IR)
-#define SANE_HAS_INFRARED
+#ifndef SANE_FRAME_IR
+#define SANE_FRAME_IR 0x0F
 #endif
 
-#ifndef SANE_HAS_INFRARED
-#warning no infrared support
+#ifndef SANE_FRAME_RGBI
+#define SANE_FRAME_RGBI 0x10
 #endif
+
+#define SANE_HAS_INFRARED
 
 #include <sane/saneopts.h>
 
@@ -101,7 +98,8 @@ static int batch_increment = 1;
 /* output options */
 static char *output_file = NULL;
 static const char *icc_profile = NULL;
-static int compress = 0;
+static int compress = 1;
+static int nocompress = 0;
 static int multi = 1;
 
 /* misc options */
@@ -141,6 +139,8 @@ static struct poptOption options[] = {
 	 "create a multi-page TIFF file", NULL},
 	{"compress", 0, POPT_ARG_NONE, &compress, 0,
 	 "use TIFF lossless compression", NULL},
+	{"no-compress", 0, POPT_ARG_NONE, &nocompress, 0,
+	 "disable compression", NULL},
 	{"icc-profile", 0, POPT_ARG_STRING, &icc_profile, 0,
 	 "embed an ICC profile in the TIFF file", "FILE"},
 
@@ -916,16 +916,12 @@ check_sane_format(SANE_Parameters * parm)
 			return 1;
 		break;
 
-#ifdef SANE_HAS_INFRARED
 	case SANE_FRAME_RGBI:
-#endif
 	case SANE_FRAME_RGB:
 		if (parm->depth == 16 || parm->depth == 8)
 			return 1;
 
-#ifdef SANE_HAS_INFRARED
 	case SANE_FRAME_IR:
-#endif
 	case SANE_FRAME_GRAY:
 		if (parm->depth == 16 || parm->depth == 8 || parm->depth == 1)
 			return 1;
@@ -1025,13 +1021,13 @@ tiff_set_fields(TIFF * image, SANE_Parameters * parm, int resolution)
 
 	}
 
-	if (compress) {
+	if (compress && !nocompress) {
 		if (parm->depth == 1)
 			TIFFSetField(image, TIFFTAG_COMPRESSION,
 				     COMPRESSION_CCITTFAX4);
 		else
 			TIFFSetField(image, TIFFTAG_COMPRESSION,
-				     COMPRESSION_PACKBITS);
+				     COMPRESSION_DEFLATE);
 	}
 
 	TIFFSetField(image, TIFFTAG_FILLORDER, FILLORDER_MSB2LSB);
@@ -1123,7 +1119,9 @@ scan_to_tiff(TIFF * image, int pageno, int pages, int resolution)
 	SANE_Byte *buffer;
 	size_t buffer_size;
 
+#ifdef SANE_HAS_WARMING_UP
 scan:
+#endif
 	if (tries == 0) {
 		printf("Your scanner must be frozen, will not try again :)\n");
 		return SANE_STATUS_IO_ERROR;

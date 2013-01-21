@@ -1,4 +1,7 @@
-
+20120121 0.7
+	- bumped version
+	- files are now compressed by default
+	- added --no-compress option
 	- fixed --mode=binary
 	- fixed memory leak
 	- SANE does not have infrared yet
