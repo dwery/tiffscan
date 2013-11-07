@@ -99,7 +99,6 @@ static int batch_increment = 1;
 static char *output_file = NULL;
 static const char *icc_profile = NULL;
 static int compress = 1;
-static int nocompress = 0;
 static int multi = 1;
 
 /* misc options */
@@ -135,12 +134,10 @@ static struct poptOption options[] = {
 	/* output options */
 	{"output-file", 'o', POPT_ARG_STRING, &output_file, 0,
 	 "output file name, use %d to insert page number", "FILE"},
-	{"multi-page", 0, POPT_ARG_NONE, &multi, 0,
+	{"multi-page", 0, POPT_BIT_SET | POPT_ARGFLAG_TOGGLE, &multi, 1,
 	 "create a multi-page TIFF file", NULL},
-	{"compress", 0, POPT_ARG_NONE, &compress, 0,
+	{"compress", 0, POPT_BIT_SET | POPT_ARGFLAG_TOGGLE, &compress, 1,
 	 "use TIFF lossless compression", NULL},
-	{"no-compress", 0, POPT_ARG_NONE, &nocompress, 0,
-	 "disable compression", NULL},
 	{"icc-profile", 0, POPT_ARG_STRING, &icc_profile, 0,
 	 "embed an ICC profile in the TIFF file", "FILE"},
 
@@ -705,7 +702,7 @@ sane_set_opt_word(SANE_Handle handle, SANE_Word index, double v)
 	if (opt->type == SANE_TYPE_FIXED)
 		orig = value = SANE_FIX(v);
 	else
-		orig = value = (SANE_Word) v;
+		orig = value = (SANE_Word)v;
 
 	p = &value;
 	status = sane_control_option(handle, index,
@@ -1021,7 +1018,7 @@ tiff_set_fields(TIFF * image, SANE_Parameters * parm, int resolution)
 
 	}
 
-	if (compress && !nocompress) {
+	if (compress) {
 		if (parm->depth == 1)
 			TIFFSetField(image, TIFFTAG_COMPRESSION,
 				     COMPRESSION_CCITTFAX4);
@@ -1430,7 +1427,10 @@ scan(SANE_Handle handle)
 	}
 
 
-	printf("scanning to %s\n", output_file);
+	printf("scanning to %s at %d dpi\n", output_file, resolution);
+
+	if (resolution < 100)
+		printf("WARNING: you are scanning at a low dpi value, please check your parameters\n");
 
 	if (batch) {
 		printf("Scanning ");
