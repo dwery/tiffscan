@@ -1,3 +1,9 @@
+20120121 0.8
+	- --no-compress -> --nocompress
+	- enabled --nomulti-page
+	- requires recent libpopt
+
+
 20120121 0.7
 	- bumped version
 	- files are now compressed by default

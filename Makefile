@@ -1,7 +1,7 @@
 
 VER = 0
 REV = 7
-REL = "tiffscan 0.7"
+REL = "tiffscan 0.8"
 
 TARGET = tiffscan
 DISTFILES = tiffscan.c Makefile ChangeLog README TODO

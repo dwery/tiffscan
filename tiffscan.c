@@ -1225,7 +1225,7 @@ scan:
 		if (progr > 100.)
 			progr = 100.;
 		if (progress)
-			printf("Progress: %3.1f%%\r", progr);
+			printf("progress: %3.1f%%\r", progr);
 
 		/* write to file */
 		{
@@ -1427,18 +1427,17 @@ scan(SANE_Handle handle)
 	}
 
 
-	printf("scanning to %s at %d dpi\n", output_file, resolution);
+	printf("Scanning to %s at %d dpi\n", output_file, resolution);
 
 	if (resolution < 100)
 		printf("WARNING: you are scanning at a low dpi value, please check your parameters\n");
 
 	if (batch) {
-		printf("Scanning ");
-		if (batch_amount != BATCH_COUNT_UNLIMITED)
-			printf("%d", batch_amount);
-		else
-			printf("an unknown amount of");
 
+		if (batch_amount != BATCH_COUNT_UNLIMITED)
+			printf(" %d", batch_amount);
+		else
+			printf(" an unknown amount of");
 
 		printf(" pages, incrementing by %d, numbering from %d\n",
 		       batch_increment, batch_start_at);
@@ -1450,7 +1449,7 @@ scan(SANE_Handle handle)
 			image = tiff_open(output_file, icc_profile, n);
 
 		if (image == NULL) {
-			printf("Cannot open file\n");
+			printf("cannot open file\n");
 			break;
 		}
 
