@@ -1,6 +1,6 @@
 
 VER = 0
-REV = 7
+REV = 8
 REL = "tiffscan 0.8"
 
 TARGET = tiffscan
