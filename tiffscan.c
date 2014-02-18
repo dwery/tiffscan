@@ -723,6 +723,8 @@ sane_set_opt_word(SANE_Handle handle, SANE_Word index, double v)
 	return status;
 }
 
+#define ADF_STR "Automatic Document Feeder"
+
 static SANE_Status
 set_option(SANE_Handle handle, int optnum, void *valuep)
 {
@@ -733,6 +735,14 @@ set_option(SANE_Handle handle, int optnum, void *valuep)
 	opt = sane_get_option_descriptor(handle, optnum);
 	if (opt == NULL)
 		return SANE_STATUS_INVAL;
+
+	// auto batch mode
+	if (strncmp(opt->name, SANE_NAME_SCAN_SOURCE, strlen(SANE_NAME_SCAN_SOURCE)) == 0) {
+		if (strncmp(valuep, ADF_STR, strlen(ADF_STR)) == 0) {
+			batch = 1;
+		}
+	}
+
 
 	if (opt->type == SANE_TYPE_INT && opt->size == sizeof(SANE_Word))
 		status = sane_set_opt_word(handle, optnum,

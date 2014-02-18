@@ -1,4 +1,7 @@
-20120121 0.8
+2014xxxx 0.9
+	- automatically enable --batch when on ADF
+
+20131107 0.8
 	- --no-compress -> --nocompress
 	- enabled --nomulti-page
 	- requires recent libpopt
