@@ -1,5 +1,6 @@
 2014xxxx 0.9
 	- automatically enable --batch when on ADF
+	- do not leave empty tiff files on error
 
 20131107 0.8
 	- --no-compress -> --nocompress

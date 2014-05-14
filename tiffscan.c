@@ -1529,9 +1529,12 @@ scan(SANE_Handle handle)
 		/* If there are no more docs, we should delete the
 		 * otherwise empty file.
 		 */
-		if (status == SANE_STATUS_NO_DOCS)
+		if (status == SANE_STATUS_NO_DOCS) {
 			if (!multi || batch_count == 0)
 				unlink(TIFFFileName(image));
+		} else if (status != SANE_STATUS_GOOD && batch_count == 0) {
+			unlink(TIFFFileName(image));
+		}
 
 		TIFFClose(image);
 	}
