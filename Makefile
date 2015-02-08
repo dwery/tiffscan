@@ -1,13 +1,13 @@
 
 VER = 0
-REV = 8
-REL = "tiffscan 0.8"
+REV = 9
+REL = "tiffscan 0.9"
 
 TARGET = tiffscan
 DISTFILES = tiffscan.c Makefile ChangeLog README TODO
 
 LIBS = -lm -ltiff -lpopt -lsane -lpaper
-CFLAGS = -I$(INCDIR) -L$(LIBDIR) $(LIBS) -D__VERSION=$(VER) -D__REVISION=$(REV) -D__RELEASE='$(REL)' -Wall
+CFLAGS = -std=gnu99 -I$(INCDIR) -L$(LIBDIR) $(LIBS) -D__VERSION=$(VER) -D__REVISION=$(REV) -D__RELEASE='$(REL)' -Wall
 
 prefix = /usr
 exec_prefix = ${prefix}
