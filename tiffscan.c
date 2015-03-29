@@ -1,10 +1,10 @@
 /*
  * tiffscan -- command line scanning utility
- * Copyright (C) 2007-12 by Alessandro Zummo <a.zummo@towertech.it>
+ * Copyright (C) 2007-15 by Alessandro Zummo <a.zummo@towertech.it>
  *
  * Loosely based on scanimage,
  *  Copyright (C) 1996, 1997, 1998 Andreas Beck and David Mosberger
- *  
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
@@ -79,7 +79,7 @@ static SANE_Word h_y = 0;
 static char *devname = NULL;
 static int verbose = 0;
 static int progress = 0;
-static int scanlines = 50;
+static int scanlines = 200;
 
 /* tiff tags */
 static const char *tiff_artist = NULL;
@@ -101,6 +101,11 @@ static const char *icc_profile = NULL;
 static int compress = 1;
 static int multi = 1;
 
+/* pdf options */
+
+static int pdf_mode = 0;
+static char *pdf_options = "-z -p a4";
+
 /* misc options */
 static const char *paper = NULL;
 
@@ -109,7 +114,7 @@ static SANE_Handle handle;
 static int batch_count = 0;
 static int resolution_optind = -1;
 static int corners[4];
-static char output_file_buf[80];
+static char output_file_buf[34];
 #ifdef SANE_HAS_EVOLVED
 static SANE_Scanner_Info si;
 #endif
@@ -164,6 +169,10 @@ static struct poptOption options[] = {
 	 "page number increment amount", NULL},
 	{"batch-prompt", 0, POPT_ARG_NONE, &batch_prompt, 0,
 	 "manual prompt before scanning", NULL},
+
+	/* pdf options */
+	{"pdf", 0, POPT_ARG_NONE, &pdf_mode, 0, "invoke tiff2pdf on the scanned tiff file(s)", NULL},
+
 
 	/* other options */
 	{"paper", 0, POPT_ARG_STRING, &paper, 0,
@@ -629,9 +638,31 @@ fetch_options(SANE_Handle handle)
 		printf (" (in steps of %d)", opt->constraint.range->quant);
 */
 				break;
-			case SANE_CONSTRAINT_WORD_LIST:
-// for (i = 0; i < opt->constraint.word_list[0]; ++i)
-				break;
+
+			case SANE_CONSTRAINT_WORD_LIST: {
+
+				int len = 0;
+				char *p = malloc(1);
+
+				for (int i = 0; i < opt->constraint.word_list[0]; i++) {
+
+					int size = (int)log10(opt->constraint.word_list[i + 1]) + 1;
+
+					// old len + separator + terminator
+					p = realloc(p, len + size + 1 + 1);
+
+					sprintf(p + len, "%d", opt->constraint.word_list[i + 1]);
+
+					if (i < (opt->constraint.word_list[0] - 1)) {
+						strcat(p, "|");
+						len++;
+					}
+
+					len += size;
+				}
+				thisopt->argDescrip = p;
+			}
+			break;
 
 			case SANE_CONSTRAINT_STRING_LIST:
 				thisopt->argDescrip =
@@ -915,6 +946,8 @@ embed_icc_profile(TIFF * image, const char *file)
 static int
 check_sane_format(SANE_Parameters * parm)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
 	switch (parm->format) {
 	case SANE_FRAME_RED:
 	case SANE_FRAME_GREEN:
@@ -936,6 +969,7 @@ check_sane_format(SANE_Parameters * parm)
 		break;
 	}
 	return 0;
+#pragma GCC diagnostic pop
 }
 
 static void
@@ -1024,7 +1058,7 @@ tiff_set_fields(TIFF * image, SANE_Parameters * parm, int resolution)
 			TIFFSetField(image, TIFFTAG_PHOTOMETRIC,
 				     PHOTOMETRIC_RGB);
 		}
-		
+
 
 	}
 
@@ -1088,6 +1122,9 @@ tiff_set_fields(TIFF * image, SANE_Parameters * parm, int resolution)
 static char *
 format2name(SANE_Frame format)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch"
+
 	switch (format) {
 	case SANE_FRAME_RGB:
 		return "RGB";
@@ -1108,11 +1145,13 @@ format2name(SANE_Frame format)
 	default:
 		return "unknown";
 	}
+
+#pragma GCC diagnostic pop
 }
 
 
 static SANE_Status
-scan_to_tiff(TIFF * image, int pageno, int pages, int resolution)
+scan_to_tiff(TIFF *image, int pageno, int pages, int resolution)
 {
 	int rows = 0;
 	int tries = 4;
@@ -1181,14 +1220,6 @@ scan:
 	if (!check_sane_format(&parm))
 		return SANE_STATUS_INVAL;
 
-	/* set tiff fields */
-	tiff_set_fields(image, &parm, resolution);
-	tiff_set_user_fields(image);
-	tiff_set_hostcomputer(image);
-
-	if (pageno && batch)
-		TIFFSetField(image, TIFFTAG_PAGENUMBER, pageno, pages);
-
 	hundred_percent = parm.bytes_per_line * parm.lines;
 	/* XXX
 	   switch (parm.format) {
@@ -1207,10 +1238,10 @@ scan:
 	buffer_size = scanlines * parm.bytes_per_line;
 
 	if (verbose > 1) {
-		printf("working on a %d Kb buffer that holds %d scanlines\n",
+		printf("working on a %ld Kb buffer that holds %d scanlines\n",
 			buffer_size / 1024,
 			scanlines);
-	}		
+	}
 
 
 	buffer = malloc(buffer_size);
@@ -1226,8 +1257,26 @@ scan:
 			break;
 
 		if (status != SANE_STATUS_GOOD) {
-			printf("sane_read: %s\n", sane_strstatus(status));
+			if (verbose) {
+				printf("sane_read: %s\n", sane_strstatus(status));
+			}
 			break;
+		}
+
+		/* no data? keep reading */
+		if (len == 0)
+			continue;
+
+		/* got some data, prepare tiff directory */
+		if (TIFFCurrentRow(image) == -1) {
+
+			tiff_set_fields(image, &parm, resolution);
+			tiff_set_user_fields(image);
+			tiff_set_hostcomputer(image);
+
+			if (pageno && batch) {
+				TIFFSetField(image, TIFFTAG_PAGENUMBER, pageno, pages);
+			}
 		}
 
 		total_bytes += (SANE_Word) len;
@@ -1263,7 +1312,7 @@ scan:
 	if (total_bytes > expected_bytes && expected_bytes != 0) {
 		printf("WARNING: read more data than announced by backend "
 		       "(%u/%u)\n", total_bytes, expected_bytes);
-	} else if (verbose)
+	} else if (verbose > 1)
 		printf("read %u bytes in total\n", total_bytes);
 
 	return status;
@@ -1401,6 +1450,56 @@ tiff_open(const char *file, const char *icc, int pageno)
 	return image;
 }
 
+// XXX check allocations
+void tiff2pdf(TIFF *image)
+{
+        TIFFFlush(image);
+
+	int len = strlen(TIFFFileName(image));
+
+	char *tif = malloc(len + 1);
+	char *pdf = malloc(len + 4 + 1);
+
+	if (tif == NULL || pdf == NULL) {
+
+		printf("out of memory\n");
+
+		free(tif);
+		free(pdf);
+
+		return;
+	}
+
+	strcpy(tif, TIFFFileName(image));
+
+	// truncate the extension if .tif
+	if (tif[len - 1 - 3] == '.') {
+		tif[len - 1 - 3] = '\0';
+	}
+
+	sprintf(pdf, "%s.pdf", tif);
+
+	printf("Saving PDF to %s\n", pdf);
+
+	char *cmd = malloc(strlen("tiff2pdf")
+			+ strlen(pdf_options)
+			+ strlen(pdf) + len + 10);
+
+	sprintf(cmd, "%s %s -o %s %s", "tiff2pdf", pdf_options, pdf, TIFFFileName(image));
+	if (verbose > 1) {
+		printf("executing %s\n", cmd);
+	}
+
+	int err = system(cmd);
+	if (err != 0) {
+		printf("error %d while executing %s", err, cmd);
+	}
+
+	free(cmd);
+	free(tif);
+	free(pdf);
+}
+
 static SANE_Status
 scan(SANE_Handle handle)
 {
@@ -1494,7 +1593,7 @@ scan(SANE_Handle handle)
 		if (batch || verbose > 1)
 			printf("Scanned page %d to %s .\n", n,
 			       TIFFFileName(image));
-			       
+
 
 		/* continue reading when EOF */
 		if (status == SANE_STATUS_EOF)
@@ -1511,6 +1610,7 @@ scan(SANE_Handle handle)
 
 		/* close if appropriate */
 		if (batch && !multi) {
+
 			TIFFClose(image);
 			image = NULL;
 		}
@@ -1521,11 +1621,11 @@ scan(SANE_Handle handle)
 	}
 	while ((batch && (batch_amount == BATCH_COUNT_UNLIMITED || count)));
 
-
 	if (batch)
 		printf("Scanned %d pages\n", batch_count);
 
 	if (image) {
+
 		/* If there are no more docs, we should delete the
 		 * otherwise empty file.
 		 */
@@ -1534,6 +1634,10 @@ scan(SANE_Handle handle)
 				unlink(TIFFFileName(image));
 		} else if (status != SANE_STATUS_GOOD && batch_count == 0) {
 			unlink(TIFFFileName(image));
+		}
+
+		if (pdf_mode && batch_count) {
+			tiff2pdf(image);
 		}
 
 		TIFFClose(image);
@@ -1633,6 +1737,7 @@ process_cmd_line(int argc, const char **argv)
 
 	return mode;
 }
+
 
 static int
 process_backend_options(SANE_Handle handle, int argc, const char **argv,
@@ -1755,7 +1860,7 @@ main(int argc, const char **argv)
 		goto end;
 	}
 
-	
+
 	printf("Using %s\n", devname);
 
 #ifdef SANE_HAS_EVOLVED
@@ -1763,7 +1868,7 @@ main(int argc, const char **argv)
 		printf("... with SANE Evolution extensions!\n");
 
 		sane_tell_api_level(handle, SANE_API(1, 1, 0));
-		
+
 		memset(&si, 0x00, sizeof(si));
 
 		status = sane_get_scanner_info(handle, &si);
@@ -1827,7 +1932,7 @@ main(int argc, const char **argv)
 
 end:
 
-        free(devname);          
+        free(devname);
 
 	exit(rc);
 }

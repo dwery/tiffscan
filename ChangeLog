@@ -1,6 +1,10 @@
-2014xxxx 0.9
+2015xxxx 0.9
 	- automatically enable --batch when on ADF
 	- do not leave empty tiff files on error
+	- enable conversion to PDF (--pdf)
+	- correctly report numerics lists in help output
+	- do not leave an empty tiff directory
+	- better output ofr scanner options
 
 20131107 0.8
 	- --no-compress -> --nocompress
