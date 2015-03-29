@@ -1614,8 +1614,10 @@ scan(SANE_Handle handle)
 			}
 		}
 
-		if (batch)
-			printf("Scanning page %d\n", n);
+		if (batch) {
+			printf("Scanning page %d... ", n);
+			fflush(stdout);
+		}
 
 		status = scan_to_tiff(image, n,
 				      (batch_amount > 0) ? batch_amount : 0,
@@ -1627,10 +1629,14 @@ scan(SANE_Handle handle)
 			break;
 		}
 
-		if (batch || verbose > 1)
-			printf("Scanned page %d to %s .\n", n,
-			       TIFFFileName(image));
+		if (batch) {
 
+			printf("to %s .\n", TIFFFileName(image));
+
+		} else if (verbose > 1) {
+			printf("Scanned page %d to %s .\n",
+			       n, TIFFFileName(image));
+		}
 
 		/* continue reading when EOF */
 		if (status == SANE_STATUS_EOF)
