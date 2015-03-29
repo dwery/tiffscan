@@ -4,7 +4,9 @@
 	- enable conversion to PDF (--pdf)
 	- correctly report numerics lists in help output
 	- do not leave an empty tiff directory
-	- better output ofr scanner options
+	- better output of scanner options, with units and ranges
+	- hide inactive buttons
+	
 
 20131107 0.8
 	- --no-compress -> --nocompress

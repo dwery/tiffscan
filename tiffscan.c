@@ -471,7 +471,7 @@ dtoa(double v)
 /* XXX move to options.c */
 static void
 add_default_option(char **dst, SANE_Handle handle,
-		   const SANE_Option_Descriptor * opt, int opt_num)
+		   const SANE_Option_Descriptor *opt, int opt_num)
 {
 	void *val;
 
@@ -489,6 +489,7 @@ add_default_option(char **dst, SANE_Handle handle,
 	strext(dst, " [");
 
 	switch (opt->type) {
+
 	case SANE_TYPE_BOOL:
 		strext(dst, *(SANE_Bool *) val ? "yes" : "no");
 		break;
@@ -577,6 +578,7 @@ fetch_options(SANE_Handle handle)
 
 	/* build backend options table */
 	for (count = i = 0; i < num_dev_options; i++) {
+
 		struct poptOption *thisopt = &options[count];
 
 		opt = sane_get_option_descriptor(handle, i);
@@ -585,6 +587,9 @@ fetch_options(SANE_Handle handle)
 			continue;
 
                 if (opt->type == SANE_TYPE_GROUP)
+                        continue;
+
+                if (opt->type == SANE_TYPE_BUTTON && !SANE_OPTION_IS_ACTIVE(opt->cap))
                         continue;
 
 		/* search and save resolution */
@@ -604,6 +609,7 @@ fetch_options(SANE_Handle handle)
 		thisopt->argDescrip = NULL;
 
 		switch (opt->type) {
+
 		case SANE_TYPE_BOOL:
 			thisopt->argInfo = POPT_ARG_INT;
 			if (opt->cap & SANE_CAP_AUTOMATIC)
@@ -631,13 +637,43 @@ fetch_options(SANE_Handle handle)
 					break;
 				}
 				break;
-			case SANE_CONSTRAINT_RANGE:
-				/*%d .. %d opt->constraint.rang->min max */
-/* XXX must handle int and float
-	if (opt->constraint.range->quant)
-		printf (" (in steps of %d)", opt->constraint.range->quant);
-*/
-				break;
+			case SANE_CONSTRAINT_RANGE: {
+
+				/* an ugly, fixed size, buffer */
+				char range[60];
+
+				if (opt->type == SANE_TYPE_FIXED) {
+
+					if (SANE_UNFIX(opt->constraint.range->min) == 0) {
+						sprintf(range, "0..%.02f",
+							SANE_UNFIX(opt->constraint.range->max));
+					} else {
+						sprintf(range, "%.02f..%.02f",
+							SANE_UNFIX(opt->constraint.range->min),
+							SANE_UNFIX(opt->constraint.range->max));
+					}
+
+				} else if (opt->type == SANE_TYPE_INT) {
+
+					sprintf(range, "%d..%d",
+						opt->constraint.range->min,
+						opt->constraint.range->max);
+				}
+
+				strext((char **)&thisopt->argDescrip, range);
+
+				if (opt->constraint.range->quant){
+
+					if (opt->type == SANE_TYPE_FIXED) {
+						sprintf(range, " (in steps of %.02f)",
+							SANE_UNFIX(opt->constraint.range->quant));
+					} else if (opt->type == SANE_TYPE_INT) {
+						sprintf(range, " (in steps of %d)",
+							opt->constraint.range->quant);
+					}
+				}
+			}
+			break;
 
 			case SANE_CONSTRAINT_WORD_LIST: {
 
@@ -674,38 +710,39 @@ fetch_options(SANE_Handle handle)
 			break;
 		}
 
-		add_default_option((char **) &thisopt->argDescrip, handle,
-				   opt, i);
-/*
 		switch (opt->unit) {
 		case SANE_UNIT_PIXEL:
-			thisopt->argDescrip = "PIXEL";
+			strext((char **)&thisopt->argDescrip, "pixel");
 			break;
 
 		case SANE_UNIT_BIT:
-			thisopt->argDescrip = "BIT";
+			strext((char **)&thisopt->argDescrip, "bit");
 			break;
 
 		case SANE_UNIT_MM:
-			thisopt->argDescrip = "MM";
+			strext((char **)&thisopt->argDescrip, "mm");
 			break;
 
 		case SANE_UNIT_DPI:
-			thisopt->argDescrip = "DPI";
+			strext((char **)&thisopt->argDescrip, "dpi");
 			break;
 
 		case SANE_UNIT_PERCENT:
-			thisopt->argDescrip = "PERCENT";
+			strext((char **)&thisopt->argDescrip, "%");
 			break;
 
 		case SANE_UNIT_MICROSECOND:
-			thisopt->argDescrip = "MICROSECOND";
+			strext((char **)&thisopt->argDescrip, "ms");
 			break;
 
 		case SANE_UNIT_NONE:
 			break;
 		}
-*/
+
+		add_default_option((char **)&thisopt->argDescrip, handle,
+				   opt, i);
+
+
 		count++;
 
 		/* Keep track of corner options */
