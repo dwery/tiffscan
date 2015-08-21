@@ -1672,10 +1672,16 @@ scan(SANE_Handle handle)
 		/* If there are no more docs, we should delete the
 		 * otherwise empty file.
 		 */
-		if (status == SANE_STATUS_NO_DOCS) {
-			if (!multi || batch_count == 0)
-				unlink(TIFFFileName(image));
-		} else if (status != SANE_STATUS_GOOD && batch_count == 0) {
+
+#if 0
+		printf("dir: %d/%d, lines: %d %d\n",
+			TIFFCurrentDirectory(image),
+			TIFFNumberOfDirectories(image),
+			TIFFNumberOfTiles(image),
+			TIFFNumberOfStrips(image));
+#endif
+
+		if (TIFFNumberOfDirectories(image) == 0) {
 			unlink(TIFFFileName(image));
 		}
 
