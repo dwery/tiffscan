@@ -1663,12 +1663,11 @@ scan(SANE_Handle handle)
 		/* close if appropriate */
 		if (batch && !multi) {
 
-			TIFFClose(image);
-
 			if (pdf_mode) {
 				tiff2pdf(image);
 			}
 
+			TIFFClose(image);
 			image = NULL;
 		}
 
@@ -1699,7 +1698,7 @@ scan(SANE_Handle handle)
 			unlink(TIFFFileName(image));
 		}
 
-		if (pdf_mode && batch_count && !multi) {
+		if (pdf_mode && batch_count && multi) {
 			tiff2pdf(image);
 		}
 
