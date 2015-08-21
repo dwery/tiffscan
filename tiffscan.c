@@ -11,6 +11,8 @@
  *
  */
 
+#define _GNU_SOURCE
+
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>
@@ -97,6 +99,7 @@ static int batch_increment = 1;
 
 /* output options */
 static char *output_file = NULL;
+static char *output_path = NULL;
 static const char *icc_profile = NULL;
 static int compress = 1;
 static int multi = 1;
@@ -139,6 +142,8 @@ static struct poptOption options[] = {
 	/* output options */
 	{"output-file", 'o', POPT_ARG_STRING, &output_file, 0,
 	 "output file name, use %d to insert page number", "FILE"},
+	{"output-dir", 'O', POPT_ARG_STRING, &output_path, 0,
+	 "output directory path, will cwd to it", "PATH"},
 	{"multi-page", 0, POPT_BIT_SET | POPT_ARGFLAG_TOGGLE, &multi, 1,
 	 "create a multi-page TIFF file", NULL},
 	{"compress", 0, POPT_BIT_SET | POPT_ARGFLAG_TOGGLE, &compress, 1,
@@ -1542,6 +1547,7 @@ scan(SANE_Handle handle)
 {
 	char readbuf[2];
 	char *readbuf2;
+	char *cwd = get_current_dir_name();
 
 	TIFF *image = NULL;
 
@@ -1572,6 +1578,9 @@ scan(SANE_Handle handle)
 		output_file = output_file_buf;
 	}
 
+	if (output_path) {
+		chdir(output_path);
+	}
 
 	printf("Scanning to %s at %d dpi\n", output_file, resolution);
 
@@ -1655,6 +1664,11 @@ scan(SANE_Handle handle)
 		if (batch && !multi) {
 
 			TIFFClose(image);
+
+			if (pdf_mode) {
+				tiff2pdf(image);
+			}
+
 			image = NULL;
 		}
 
@@ -1685,12 +1699,15 @@ scan(SANE_Handle handle)
 			unlink(TIFFFileName(image));
 		}
 
-		if (pdf_mode && batch_count) {
+		if (pdf_mode && batch_count && !multi) {
 			tiff2pdf(image);
 		}
 
 		TIFFClose(image);
 	}
+
+	chdir(cwd);
+	free(cwd);
 
 	return status;
 }
