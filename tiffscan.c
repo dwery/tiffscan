@@ -1728,17 +1728,14 @@ set_scanning_area(SANE_Handle handle, double width, double height)
 
 enum modes
 { MODE_NONE, MODE_SCAN, MODE_LIST, MODE_ERROR, MODE_STOP,
-	MODE_VERSION
+	MODE_VERSION, MODE_HELP
 };
 
 static int
-process_cmd_line(int argc, const char **argv)
+process_cmd_line(poptContext optc, int argc, const char **argv)
 {
 	int optrc;
 	int mode = MODE_NONE;
-
-	poptContext optc = poptGetContext("tiffscan", argc, argv, options,
-					  POPT_CONTEXT_POSIXMEHARDER);
 
 	/* parse arguments */
 	for (optrc = 0; optrc != -1;) {
@@ -1774,10 +1771,7 @@ process_cmd_line(int argc, const char **argv)
 			break;
 
 		case OPT_HELP:
-			if (devname == NULL) {
-				mode = MODE_STOP;
-				poptPrintHelp(optc, stdout, 0);
-			}
+			mode = MODE_HELP;
 			break;
 
                 /* this is saved here, do not use libopt automatic
@@ -1798,8 +1792,6 @@ process_cmd_line(int argc, const char **argv)
 		}
 	}
 
-	poptFreeContext(optc);
-
 	return mode;
 }
 
@@ -1811,7 +1803,6 @@ process_backend_options(SANE_Handle handle, int argc, const char **argv,
 	SANE_Status status;
 
 	int optrc;
-	poptContext optc;
 	struct poptOption *dev_options;
 
 	dev_options = fetch_options(handle);
@@ -1819,13 +1810,20 @@ process_backend_options(SANE_Handle handle, int argc, const char **argv,
 		return MODE_STOP;
 
 	/* include the backend options into the main table */
+	char *bopt = "Backend options for ";
+	char *desc = malloc(strlen(bopt) + strlen(devname) + 1);
+
+	strcpy(desc, bopt);
+	strcat(desc, devname);
+
 	options[ARRAY_SIZE(options) - 2].argInfo = POPT_ARG_INCLUDE_TABLE;
 	options[ARRAY_SIZE(options) - 2].arg = dev_options;
-	options[ARRAY_SIZE(options) - 2].descrip = "Backend options";
+	options[ARRAY_SIZE(options) - 2].descrip = desc;
 
-	optc = poptGetContext("tiffscan", argc, argv, options, 0);
+	poptContext optc = poptGetContext("tiffscan", argc, argv, options, 0);
 
 	while ((optrc = poptGetNextOpt(optc)) > 0) {
+
 		if (optrc >= 1000) {	/* backend option */
 			status = process_backend_option(handle,
 							optrc - 1000,
@@ -1864,7 +1862,9 @@ process_backend_options(SANE_Handle handle, int argc, const char **argv,
 		       poptStrerror(optrc));
 	}
 
+
 	poptFreeContext(optc);
+	free(desc);
 	free(dev_options);
 
 	return mode;
@@ -1884,7 +1884,11 @@ main(int argc, const char **argv)
 
 	sane_init(&version, NULL);
 
-	mode = process_cmd_line(argc, argv);
+	/* process options */
+	poptContext optc = poptGetContext("tiffscan", argc, argv, options,
+					  POPT_CONTEXT_POSIXMEHARDER);
+
+	mode = process_cmd_line(optc, argc, argv);
 
 	if (mode == MODE_VERSION || verbose > 0) {
 		printf("tiffscan %d.%d (%s); libsane version %d.%d.%d\n",
@@ -1901,11 +1905,18 @@ main(int argc, const char **argv)
 		goto end;
 
 	/* find a scanner */
-	if (devname == NULL)
+	if (devname == NULL) {
                 devname = find_suitable_device();
+	}
 
-	if (devname == NULL)
+	if (devname == NULL && mode == MODE_HELP) {
+		poptPrintHelp(optc, stdout, 0);
 		goto end;
+	}
+
+	if (devname == NULL) {
+		goto end;
+	}
 
 	/* open */
 	if (devname[0] == '/') {
@@ -1924,7 +1935,6 @@ main(int argc, const char **argv)
 		       devname, sane_strstatus(status));
 		goto end;
 	}
-
 
 	printf("Using %s\n", devname);
 
@@ -1996,8 +2006,8 @@ main(int argc, const char **argv)
 		printf("SANE error: %s\n", sane_strstatus(status));
 
 end:
-
-        free(devname);
+	poptFreeContext(optc);
+	free(devname);
 
 	exit(rc);
 }
