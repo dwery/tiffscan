@@ -7,7 +7,7 @@ TARGET = tiffscan
 DISTFILES = tiffscan.c Makefile ChangeLog README TODO
 
 LIBS = -lm -ltiff -lpopt -lsane -lpaper
-CFLAGS = -std=gnu99 -I$(INCDIR) -L$(LIBDIR) $(LIBS) -D__VERSION=$(VER) -D__REVISION=$(REV) -D__RELEASE='$(REL)' -Wall
+CFLAGS = -std=gnu11 -I$(INCDIR) -L$(LIBDIR) $(LIBS) -D__VERSION=$(VER) -D__REVISION=$(REV) -D__RELEASE='$(REL)' -Wall
 
 prefix = /usr
 exec_prefix = ${prefix}
