@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <math.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1486,7 +1487,7 @@ tiff_open(const char *file, const char *icc, int pageno)
 	free(f);
 
 	/* embed ICC profile */
-	if (icc)
+	if (image && icc)
 		embed_icc_profile(image, icc);
 
 	return image;
@@ -1576,10 +1577,6 @@ scan(SANE_Handle handle)
 		strcat((char *) output_file_buf, ".tif");
 
 		output_file = output_file_buf;
-	}
-
-	if (output_path) {
-		chdir(output_path);
 	}
 
 	printf("Scanning to %s at %d dpi\n", output_file, resolution);
@@ -1993,6 +1990,15 @@ main(int argc, const char **argv)
 
 		set_scanning_area(handle, paperpswidth(pi),
 				  paperpsheight(pi));
+	}
+
+	// switch to output path, if requested
+	if (output_path) {
+		int err = chdir(output_path);
+		if (err != 0) {
+			printf("Cannot switch to %s: %s\n", output_path, strerror(errno));
+			goto end;
+		}
 	}
 
 	/* scan */
